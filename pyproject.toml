@@ -1,6 +1,6 @@
 [project]
 name = "Industrial-Image-Generator"
-version = "1.2.0"
+dynamic = ["version"]
 description = "工业图像生成器 - 模拟工业相机采集图像过程"
 requires-python = ">=3.11"
 dependencies = [
@@ -27,3 +27,6 @@ where = ["src"]
 
 [tool.setuptools]
 py-modules = ["main", "config"]
+
+[tool.setuptools.dynamic]
+version = {file = "VERSION"}

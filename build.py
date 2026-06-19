@@ -12,7 +12,9 @@ ASSETS_DIR = PROJECT_ROOT / "assets"
 MAIN_SCRIPT = SRC_DIR / "main.py"
 OUTPUT_DIR = PROJECT_ROOT / "dist"
 NAME = "工业图像生成器"
+NAME_EN = "IndustrialImageGenerator"
 ICO_PATH = ASSETS_DIR / "app_icon.ico"
+VERSION_FILE = PROJECT_ROOT / "VERSION"
 
 
 def ensure_pyinstaller() -> None:
@@ -27,7 +29,7 @@ def ensure_pyinstaller() -> None:
 
 
 def build() -> None:
-    """执行打包构建。"""
+    """执行打包构建，生成中文和英文两个 exe。"""
     ensure_pyinstaller()
 
     cmd = [
@@ -52,6 +54,9 @@ def build() -> None:
     ico_path = ASSETS_DIR / "app_icon.ico"
     if ico_path.exists():
         cmd += ["--add-data", f"{ico_path}{os.pathsep}assets"]
+    # VERSION 文件
+    if VERSION_FILE.exists():
+        cmd += ["--add-data", f"{VERSION_FILE}{os.pathsep}."]
 
     cmd += [
         "--hidden-import", "loguru._file_sink",
@@ -68,9 +73,16 @@ def build() -> None:
 
     result = subprocess.run(cmd, cwd=str(PROJECT_ROOT))
     if result.returncode == 0:
-        exe_path = OUTPUT_DIR / f"{NAME}.exe"
+        exe_cn = OUTPUT_DIR / f"{NAME}.exe"
+        exe_en = OUTPUT_DIR / f"{NAME_EN}.exe"
         print("-" * 60)
-        print(f"打包成功: {exe_path}")
+        print(f"中文版: {exe_cn}")
+
+        # 复制生成英文版（内容相同，仅文件名不同）
+        import shutil
+        shutil.copy2(exe_cn, exe_en)
+        print(f"英文版: {exe_en}")
+        print("打包成功")
     else:
         print("打包失败，请检查上方错误信息。")
         sys.exit(result.returncode)

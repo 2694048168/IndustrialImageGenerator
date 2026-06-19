@@ -54,6 +54,10 @@ uv run python generate_logo.py
 
 # 打包为 exe
 uv run python build.py
+
+# build Release
+echo "1.3.0" > VERSION
+uv lock && uv run python build.py
 ```
 
 ## 默认账户
