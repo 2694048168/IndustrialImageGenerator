@@ -1,0 +1,29 @@
+[project]
+name = "Industrial-Image-Generator"
+version = "1.2.0"
+description = "工业图像生成器 - 模拟工业相机采集图像过程"
+requires-python = ">=3.11"
+dependencies = [
+    "opencv-python>=4.10.0",
+    "pyside6>=6.7.0",
+    "loguru>=0.7.3",
+    "numpy>=1.26.0",
+    "pillow>=12.2.0",
+    "pyinstaller>=6.21.0",
+]
+
+[project.scripts]
+image-generator = "main:main"
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.setuptools]
+py-modules = ["main", "config"]
