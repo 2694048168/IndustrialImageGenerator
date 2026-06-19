@@ -1,4 +1,16 @@
-"""图像生成核心模块 - 基于 OpenCV 生成工业检测图像。"""
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+'''
+@File: image_generator.py
+@Python Version: 3.12.8
+@Author: Wei Li (Ithaca)
+@Email: weili_yzzcq@163.com
+@Blog: https://2694048168.github.io/blog/
+@Date: 2026-06-19
+@copyright Copyright (c) 2026 Wei Li
+@Description: 图像生成核心模块 - 基于 OpenCV 生成工业检测图像
+'''
 
 import random
 

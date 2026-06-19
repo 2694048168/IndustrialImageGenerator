@@ -1,4 +1,16 @@
-"""右侧图像预览面板 - 支持缩放、像素网格和像素信息实时显示。"""
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+@File: image_preview.py
+@Python Version: 3.12.8
+@Author: Wei Li (Ithaca)
+@Email: weili_yzzcq@163.com
+@Blog: https://2694048168.github.io/blog/
+@Date: 2026-06-19
+@copyright Copyright (c) 2026 Wei Li
+@Description: 右侧图像预览面板 - 支持缩放、像素网格和像素信息实时显示
+"""
 
 import cv2
 import numpy as np

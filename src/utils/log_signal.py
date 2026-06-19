@@ -1,4 +1,16 @@
-"""Loguru → Qt 信号桥接模块。"""
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+'''
+@File: log_signal.py
+@Python Version: 3.12.8
+@Author: Wei Li (Ithaca)
+@Email: weili_yzzcq@163.com
+@Blog: https://2694048168.github.io/blog/
+@Date: 2026-06-19
+@copyright Copyright (c) 2026 Wei Li
+@Description: Loguru - Qt 信号桥接模块
+'''
 
 from PySide6.QtCore import QObject, Signal
 
