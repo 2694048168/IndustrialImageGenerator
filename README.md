@@ -9,6 +9,7 @@
   </p>
 </div>
 
+![image](./image/software.png)
 
 ## 快速下载
 
