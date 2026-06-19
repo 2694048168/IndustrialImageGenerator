@@ -172,6 +172,16 @@ class ImagePreviewWidget(QWidget):
         self._zoom_factor = max(self._min_zoom, min(self._max_zoom, self._zoom_factor))
         self._update_zoom_label()
 
+    def clear(self) -> None:
+        """清空预览区域。"""
+        self._original_image = None
+        self._pixmap_item.setPixmap(QPixmap())
+        self._grid_item.setVisible(False)
+        self._pos_label.setText("X: --  Y: --")
+        self._gray_label.setText("Gray: --")
+        self._rgb_label.setText("R: --  G: --  B: --")
+        self._zoom_label.setText("Zoom: 100%")
+
     def eventFilter(self, obj, event) -> bool:
         """事件过滤器：处理鼠标移动（更新像素信息）和滚轮（缩放）。"""
         if obj is self._view.viewport():

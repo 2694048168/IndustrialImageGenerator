@@ -19,7 +19,7 @@ import numpy as np
 
 
 class ImageGenerator:
-    """工业图像生成器，模拟工业相机采集图像。"""
+    """工业图像生成器，支持空白图像生成和底图叠加增强。"""
 
     def __init__(self):
         self._width: int = 640
@@ -32,6 +32,7 @@ class ImageGenerator:
         self._r_value: int = 128
         self._g_value: int = 128
         self._b_value: int = 128
+        self._base_image: np.ndarray | None = None
 
     @property
     def width(self) -> int:
@@ -52,6 +53,22 @@ class ImageGenerator:
     @property
     def image(self) -> np.ndarray | None:
         return self._image
+
+    @property
+    def has_base_image(self) -> bool:
+        return self._base_image is not None
+
+    def set_base_image(self, image: np.ndarray) -> None:
+        """加载外部图像作为底图，自动同步分辨率与图像模式。"""
+        self._base_image = image.copy()
+        h, w = image.shape[:2]
+        self._width = w
+        self._height = h
+        self._mode = "gray" if len(image.shape) == 2 else "rgb"
+
+    def clear_base_image(self) -> None:
+        """清除底图，恢复空白图像生成模式。"""
+        self._base_image = None
 
     def set_resolution(self, width: int, height: int) -> None:
         self._width = max(1, width)
@@ -86,22 +103,25 @@ class ImageGenerator:
         shapes: list[dict] | None = None,
         defects: list[dict] | None = None,
     ) -> np.ndarray:
-        """生成工业图像：纯色背景 + 形状叠加 + 缺陷叠加。"""
-        h, w = self._height, self._width
-
-        # 1. 纯色背景
-        if self._mode == "gray":
-            image = np.full((h, w), self._gray_value, dtype=np.uint8)
+        """生成图像：底图模式（叠加增强）或空白模式（纯色背景 + 叠加）。"""
+        # 底图模式：以加载的图像为底
+        if self._base_image is not None:
+            image = self._base_image.copy()
         else:
-            image = np.zeros((h, w, 3), dtype=np.uint8)
-            image[:, :] = (self._b_value, self._g_value, self._r_value)
+            # 空白模式：纯色背景
+            h, w = self._height, self._width
+            if self._mode == "gray":
+                image = np.full((h, w), self._gray_value, dtype=np.uint8)
+            else:
+                image = np.zeros((h, w, 3), dtype=np.uint8)
+                image[:, :] = (self._b_value, self._g_value, self._r_value)
 
-        # 2. 叠加形状
+        # 叠加形状
         if shapes:
             for shape in shapes:
                 self._draw_shape(image, shape)
 
-        # 3. 叠加缺陷
+        # 叠加缺陷
         if defects:
             for defect in defects:
                 self._draw_defects(image, defect)

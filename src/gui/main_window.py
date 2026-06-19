@@ -153,6 +153,8 @@ class MainWindow(QMainWindow):
         self._param_panel.generate_requested.connect(self._on_generate)
         self._param_panel.save_requested.connect(self._on_save)
         self._param_panel.admin_required.connect(self._on_admin_required)
+        self._param_panel.image_load_requested.connect(self._on_load_image)
+        self._param_panel.clear_base_requested.connect(self._on_clear_base_image)
 
     def _log(self, message: str) -> None:
         """记录用户操作日志。"""
@@ -265,6 +267,56 @@ class MainWindow(QMainWindow):
         self._param_panel._generate_btn.setEnabled(True)
         self._status_bar.showMessage(f"生成失败: {error_msg}")
         self._log(f"图像生成失败: {error_msg}")
+
+    # ===================== 底图加载 / 清除 =====================
+
+    def _on_load_image(self) -> None:
+        """加载外部图像作为底图，用于数据集增强。"""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "加载底图图像",
+            "",
+            "图像文件 (*.png *.jpg *.jpeg *.bmp *.tiff *.tif);;所有文件 (*)",
+        )
+        if not file_path:
+            return
+
+        try:
+            image = cv2.imread(file_path, cv2.IMREAD_UNCHANGED)
+            if image is None:
+                raise ValueError("无法读取图像文件，请检查格式。")
+
+            # 灰度图是 2 通道单通道，rgb 是 3 通道
+            if len(image.shape) == 2:
+                pass  # 灰度图
+            elif len(image.shape) == 3 and image.shape[2] == 3:
+                pass  # RGB
+            elif len(image.shape) == 3 and image.shape[2] == 4:
+                # 带 alpha 通道，转为 RGB
+                image = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
+            else:
+                raise ValueError(f"不支持的图像通道数: {image.shape}")
+
+            self._generator.set_base_image(image)
+            h, w = image.shape[:2]
+            mode = "gray" if len(image.shape) == 2 else "rgb"
+
+            self._param_panel.set_base_image_loaded(file_path, w, h, mode)
+            self._preview_panel.set_image(image)
+            self._status_bar.showMessage(f"底图已加载: {file_path} ({w}×{h} px)")
+            self._log(f"加载底图: {file_path} ({w}×{h} px, {'灰度' if mode == 'gray' else 'RGB'})")
+
+        except Exception as e:
+            QMessageBox.critical(self, "加载失败", f"加载图像失败:\n{e}")
+            self._log(f"加载底图失败: {e}")
+
+    def _on_clear_base_image(self) -> None:
+        """清除底图，恢复空白图像生成模式。"""
+        self._generator.clear_base_image()
+        self._param_panel.clear_base_image_state()
+        self._preview_panel.clear()
+        self._status_bar.showMessage("底图已清除，恢复空白图像生成模式")
+        self._log("清除底图")
 
     # ===================== 保存图像 =====================
 

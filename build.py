@@ -69,6 +69,10 @@ def build() -> None:
     # VERSION 文件
     if VERSION_FILE.exists():
         cmd += ["--add-data", f"{VERSION_FILE}{os.pathsep}."]
+    # QSS 样式表
+    qss_path = ASSETS_DIR / "industrial_style.qss"
+    if qss_path.exists():
+        cmd += ["--add-data", f"{qss_path}{os.pathsep}assets"]
 
     cmd += [
         "--hidden-import", "loguru._file_sink",

@@ -36,7 +36,9 @@ class ParamPanel(QWidget):
     params_changed = Signal(dict)
     generate_requested = Signal()
     save_requested = Signal()
-    admin_required = Signal()  # 非管理员点击高级功能时发出
+    admin_required = Signal()     # 非管理员点击高级功能时发出
+    image_load_requested = Signal()  # 用户请求加载底图
+    clear_base_requested = Signal()  # 用户请求清除底图
 
     def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
@@ -82,6 +84,7 @@ class ParamPanel(QWidget):
         layout.addWidget(self._build_precision_group())
         layout.addWidget(self._build_config_group())
         layout.addWidget(self._build_fov_group())
+        layout.addWidget(self._build_image_load_group())
         layout.addStretch()
 
         scroll.setWidget(content)
@@ -251,10 +254,18 @@ class ParamPanel(QWidget):
         self._shape_list.setMaximumHeight(80)
         layout.addWidget(self._shape_list)
 
+        del_row = QHBoxLayout()
+        del_row.setSpacing(6)
         del_btn = QPushButton("删除选中")
         del_btn.setMinimumHeight(28)
         del_btn.clicked.connect(self._on_remove_shape)
-        layout.addWidget(del_btn)
+        del_row.addWidget(del_btn)
+        clear_all_btn = QPushButton("删除所有")
+        clear_all_btn.setMinimumHeight(28)
+        clear_all_btn.clicked.connect(self._on_remove_all_shapes)
+        del_row.addWidget(clear_all_btn)
+        del_row.addStretch()
+        layout.addLayout(del_row)
 
         return group
 
@@ -311,10 +322,18 @@ class ParamPanel(QWidget):
         self._defect_list.setMaximumHeight(80)
         layout.addWidget(self._defect_list)
 
+        del_row = QHBoxLayout()
+        del_row.setSpacing(6)
         del_btn = QPushButton("删除选中")
         del_btn.setMinimumHeight(28)
         del_btn.clicked.connect(self._on_remove_defect)
-        layout.addWidget(del_btn)
+        del_row.addWidget(del_btn)
+        clear_all_btn = QPushButton("删除所有")
+        clear_all_btn.setMinimumHeight(28)
+        clear_all_btn.clicked.connect(self._on_remove_all_defects)
+        del_row.addWidget(clear_all_btn)
+        del_row.addStretch()
+        layout.addLayout(del_row)
 
         return group
 
@@ -326,6 +345,73 @@ class ParamPanel(QWidget):
         layout.addWidget(self._fov_label)
         return group
 
+    def _build_image_load_group(self) -> QGroupBox:
+        group = QGroupBox("底图加载（数据集增强）")
+        layout = QVBoxLayout(group)
+        layout.setSpacing(6)
+
+        self._base_image_label = QLabel("未加载底图")
+        self._base_image_label.setStyleSheet("color: #888; font-size: 11px;")
+        self._base_image_label.setWordWrap(True)
+        layout.addWidget(self._base_image_label)
+
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(6)
+
+        self._load_image_btn = QPushButton("加载图像")
+        self._load_image_btn.setMinimumHeight(28)
+        self._load_image_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._load_image_btn.clicked.connect(self.image_load_requested.emit)
+        btn_row.addWidget(self._load_image_btn)
+
+        self._clear_base_btn = QPushButton("清除底图")
+        self._clear_base_btn.setMinimumHeight(28)
+        self._clear_base_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._clear_base_btn.setVisible(False)
+        self._clear_base_btn.clicked.connect(self.clear_base_requested.emit)
+        btn_row.addWidget(self._clear_base_btn)
+
+        btn_row.addStretch()
+        layout.addLayout(btn_row)
+        return group
+
+    def set_base_image_loaded(self, file_path: str, width: int, height: int, mode: str) -> None:
+        """底图加载成功后更新 UI：锁定分辨率/类型，显示文件信息。"""
+        import os
+        self._base_image_label.setText(f"已加载: {os.path.basename(file_path)}\n{width}×{height} px | {'灰度' if mode == 'gray' else 'RGB'}")
+        self._base_image_label.setStyleSheet("color: #4caf50; font-size: 11px;")
+        self._load_image_btn.setVisible(False)
+        self._clear_base_btn.setVisible(True)
+
+        # 锁定分辨率与图像类型
+        self._width_spin.setEnabled(False)
+        self._height_spin.setEnabled(False)
+        self._image_type_combo.setEnabled(False)
+        self._gray_value_spin.setEnabled(False)
+        self._r_spin.setEnabled(False)
+        self._g_spin.setEnabled(False)
+        self._b_spin.setEnabled(False)
+
+        # 同步显示值
+        self._width_spin.setValue(width)
+        self._height_spin.setValue(height)
+        self._image_type_combo.setCurrentIndex(0 if mode == "gray" else 1)
+
+    def clear_base_image_state(self) -> None:
+        """清除底图后恢复 UI：解锁分辨率/类型。"""
+        self._base_image_label.setText("未加载底图")
+        self._base_image_label.setStyleSheet("color: #888; font-size: 11px;")
+        self._load_image_btn.setVisible(True)
+        self._clear_base_btn.setVisible(False)
+
+        self._width_spin.setEnabled(True)
+        self._height_spin.setEnabled(True)
+        self._image_type_combo.setEnabled(True)
+        self._gray_value_spin.setEnabled(True)
+        self._r_spin.setEnabled(True)
+        self._g_spin.setEnabled(True)
+        self._b_spin.setEnabled(True)
+
     def _build_button_row(self) -> QHBoxLayout:
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(8)
@@ -333,28 +419,13 @@ class ParamPanel(QWidget):
         self._generate_btn = QPushButton("生成图像")
         self._generate_btn.setMinimumHeight(36)
         self._generate_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self._generate_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d4; color: white; font-weight: bold;
-                border: none; border-radius: 4px; padding: 6px 16px;
-            }
-            QPushButton:hover { background-color: #106ebe; }
-            QPushButton:pressed { background-color: #005a9e; }
-            QPushButton:disabled { background-color: #888; }
-        """)
+        self._generate_btn.setObjectName("generateBtn")
         btn_layout.addWidget(self._generate_btn)
 
         self._save_btn = QPushButton("保存图像")
         self._save_btn.setMinimumHeight(36)
         self._save_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self._save_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #107c10; color: white; font-weight: bold;
-                border: none; border-radius: 4px; padding: 6px 16px;
-            }
-            QPushButton:hover { background-color: #0e6e0e; }
-            QPushButton:pressed { background-color: #0a5a0a; }
-        """)
+        self._save_btn.setObjectName("saveBtn")
         btn_layout.addWidget(self._save_btn)
         return btn_layout
 
@@ -406,6 +477,11 @@ class ParamPanel(QWidget):
         self._refresh_shape_list()
         self._on_params_changed()
 
+    def _on_remove_all_shapes(self) -> None:
+        self._shapes.clear()
+        self._refresh_shape_list()
+        self._on_params_changed()
+
     def _refresh_shape_list(self) -> None:
         self._shape_list.clear()
         for s in self._shapes:
@@ -442,6 +518,11 @@ class ParamPanel(QWidget):
             idx = self._defect_list.row(item)
             if 0 <= idx < len(self._defects):
                 self._defects.pop(idx)
+        self._refresh_defect_list()
+        self._on_params_changed()
+
+    def _on_remove_all_defects(self) -> None:
+        self._defects.clear()
         self._refresh_defect_list()
         self._on_params_changed()
 

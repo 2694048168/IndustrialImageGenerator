@@ -41,13 +41,21 @@ def _get_icon_path() -> Path:
     return base / "assets" / "app_icon.ico"
 
 
+def _get_qss_path() -> Path:
+    if getattr(sys, "frozen", False):
+        base = Path(sys._MEIPASS)
+    else:
+        base = Path(__file__).parent.parent.parent.parent
+    return base / "assets" / "industrial_style.qss"
+
+
 class SplashScreen(QSplashScreen):
     """带进度文字和代码控制标题/版本的自定义启动画面。"""
 
     def __init__(self, pixmap: QPixmap):
         super().__init__(pixmap)
         self._progress = 0
-        self._steps = [10, 20, 30, 45, 75, 90, 100]
+        self._steps = [45, 75, 90, 100]
         self._step_idx = 0
         self._done_callback = None
 
@@ -61,7 +69,7 @@ class SplashScreen(QSplashScreen):
             self._progress = self._steps[self._step_idx]
             self._step_idx += 1
             self.repaint()
-            QTimer.singleShot(1000, self._advance)
+            QTimer.singleShot(500, self._advance)
         else:
             # 100% 完成，直接回调
             if self._done_callback:
@@ -123,6 +131,14 @@ def main() -> None:
         icon_path = _get_icon_path()
         if icon_path.exists():
             app.setWindowIcon(QIcon(str(icon_path)))
+
+        # 加载工业视觉风格 QSS 样式表
+        qss_path = _get_qss_path()
+        if qss_path.exists():
+            app.setStyleSheet(qss_path.read_text(encoding="utf-8"))
+            logger.info("QSS 样式表加载成功: {}", qss_path)
+        else:
+            logger.warning("QSS 样式表未找到: {}", qss_path)
 
         # 启动画面
         logo_path = _get_logo_path()

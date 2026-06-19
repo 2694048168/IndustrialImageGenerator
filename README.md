@@ -31,6 +31,8 @@ python src/main.py
 - 日志系统：loguru 文件日志 + 界面实时回显
 - 多线程图像生成，UI 不阻塞
 - 带进度条的蓝色工业风启动画面
+- 加载本地图像作为底图,通过叠加形状和缺陷增强数据集
+- 增加 QSS 作为软件整体风格显示控制
 
 ## 技术栈
 
@@ -57,7 +59,7 @@ uv run python generate_logo.py
 uv run python build.py
 
 # build Release
-echo "1.3.0" > VERSION
+echo "1.4.0" > VERSION
 uv lock && uv run python build.py
 ```
 
